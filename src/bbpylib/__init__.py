@@ -4,7 +4,7 @@ bbpylib — personal Python utilities.
 
 __all__ = []
 
-print("Hello this is an update of bbpylib")
+print("Hello this is the latest version of bbpylib!")
 
 def foobar(s):
     return "foo" + s + "bar"

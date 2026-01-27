@@ -1,3 +1,5 @@
+## the git_is_up_to_date function at the end needs to be integrated into the class.
+
 import subprocess
 from pathlib import Path
 from google.colab import userdata
@@ -37,3 +39,19 @@ class GitRepo:
             raise RuntimeError(f"{token_key} not found in Colab userdata")
         url = f"https://{user}:{token}@github.com/{user}/{self.path.name}.git"
         return self._git("remote", "set-url", remote, url)
+
+
+def git_is_up_to_date(repo, base="/content/drive/MyDrive/GIT-repos"):
+    path = Path(base) / repo
+    subprocess.run(["git", "fetch"], cwd=path, check=True)
+
+    r = subprocess.run(
+        ["git", "rev-list", "--left-right", "--count", "HEAD...@{u}"],
+        cwd=path,
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    ahead, behind = map(int, r.stdout.split())
+    return ahead == 0 and behind == 0
+

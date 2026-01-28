@@ -1,6 +1,6 @@
 import subprocess
 
-def run_command(cmd, *, cwd=None, check=True):
+def run_command(cmd, *, cwd=None, env=None, check=True):
     """
     Run an external command, echo stdout/stderr, and raise on failure.
 
@@ -17,6 +17,7 @@ def run_command(cmd, *, cwd=None, check=True):
     r = subprocess.run(
         cmd,
         cwd=cwd,
+        env=env,
         text=True,
         capture_output=True
     )

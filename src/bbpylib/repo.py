@@ -79,6 +79,7 @@ class GitCommander:
         self.name = repo.name
         self.user = repo.user
         self.token = repo.git_token
+        self.url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
 
     def git_command(self, *cmd, check=True):
         return run_command(["git", *cmd], cwd=self.repo.root, check=check)
@@ -98,8 +99,8 @@ class GitCommander:
         return self.git_command("commit", "-m", message)
 
     def push(self):
-        url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
-        self.git_command( "push", url )
+        #url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
+        self.git_command( "push", self.url )
 
     def update(self, message="Committing minor updates."):
         self.add()
@@ -107,8 +108,8 @@ class GitCommander:
         self.push()
 
     def fetch(self):
-        url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
-        self.git_command( "fetch", url )
+        #url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
+        self.git_command( "fetch", self.url )
 
     def merge(self):
         self.git_command( "merge", "FETCH_HEAD" )
@@ -122,8 +123,7 @@ class GitCommander:
 
     # Don't really need to do this as can pass the token directly
     def set_token_remote(self, remote="origin"):
-        url = f"https://{self.user}:{self.token}@github.com/{user}/{self.name}.git"
-        return self._git("remote", "set-url", remote, url)
+        return self._git("remote", "set-url", remote, self.url)
 
 # def git_update(repo_name, message="Minor change"):
 #   git_add_and_commit(repo_name, message=message )

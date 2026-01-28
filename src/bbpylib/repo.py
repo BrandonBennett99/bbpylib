@@ -28,7 +28,7 @@ class Repo:
     self.root =  Path( Path(location)/ name )
     self.src =  Path( self.root, "src", name )
     self.git = GitCommander(self)
-    self.version = "banjo"
+    self.version = "fiddle"
 
   def pip_version(self):
       with open(self.root/"pyproject.toml", "rb") as f:
@@ -38,12 +38,31 @@ class Repo:
   def increment_pip_version(self, part="patch"):
       v = self.pip_version()
       nv = bump_version(v, part=part)
-      set_version(nv, self)
+      self.set_version(nv, self)
+
+  def set_version(self, new_version):
+      path = Path(self.root/"pyproject.toml")
+      text = path.read_text()
+      text, n = re.subn( r'(version\s*=\s*")[^"]+(")',
+                        rf'\1{new_version}\2',
+                        text, count=1)
+      if n != 1:
+          raise RuntimeError("Could not uniquely locate version field")
+      path.write_text(text)
+
 
   def show_config(self):
       with open(self.root/"pyproject.toml", "r") as f:
           print( f.read() )
 
+  def check_repo_files( self ):
+      root = self.root
+      print("pyproject:", (root/"pyproject.toml").exists())
+      print("src dir:", (root/"src").is_dir())
+      print("pkg dir:", (root/"src"/self.name).is_dir())
+      print("__init__.py:", (root/"src"/self.name/"__init__.py").exists())
+
+# This is just a str->str function so not in the class
 def bump_version(v, part="patch"):
     major, minor, patch = map(int, v.split("."))
     if part == "major":
@@ -54,22 +73,7 @@ def bump_version(v, part="patch"):
         return f"{major}.{minor}.{patch + 1}"
     raise ValueError("part must be 'major', 'minor', or 'patch'")
 
-def set_version(new_version, repo):
-    path = Path(repo.root/"pyproject.toml")
-    text = path.read_text()
-    text, n = re.subn( r'(version\s*=\s*")[^"]+(")',
-                       rf'\1{new_version}\2',
-                       text, count=1)
-    if n != 1:
-        raise RuntimeError("Could not uniquely locate version field")
-    path.write_text(text)
 
-def check_repo_files( r ):
-  root = r.root
-  print("pyproject:", (root/"pyproject.toml").exists())
-  print("src dir:", (root/"src").is_dir())
-  print("pkg dir:", (root/"src"/r.name).is_dir())
-  print("__init__.py:", (root/"src"/r.name/"__init__.py").exists())
 
 
 
@@ -107,7 +111,7 @@ class GitCommander:
         self.push()
 
     def fetch(self):
-        self.git_command( "fetch", self.url )
+        return self.git_command( "fetch", self.url )
 
     def merge(self):
         self.git_command( "merge", "FETCH_HEAD" )
@@ -116,27 +120,12 @@ class GitCommander:
         self.fetch()
         self.merge()
 
-    def up_to_date(self):
-        return git_is_up_to_date(self.repo)
-
     # Don't really need to do this as can pass the token directly
     def set_token_remote(self, remote="origin"):
         return self._git("remote", "set-url", remote, self.url)
 
-# def git_update(repo_name, message="Minor change"):
-#   git_add_and_commit(repo_name, message=message )
-#   git_push(repo_name)
-
-def git_is_up_to_date(repo):
-    path = repo.root
-    subprocess.run(["git", "fetch"], cwd=path, check=True)
-
-    r = subprocess.run(
-        ["git", "rev-list", "--left-right", "--count", "HEAD...@{u}"],
-        cwd=path,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    ahead, behind = map(int, r.stdout.split())
-    return ahead == 0 and behind == 0
+    def is_up_to_date(self):
+        self.fetch()
+        r = self.git_command( "rev-list", "--left-right", "--count", "HEAD...@{u}" )
+        ahead, behind = map(int, r.stdout.split())
+        return (ahead == 0 and behind == 0)

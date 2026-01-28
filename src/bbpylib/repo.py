@@ -28,7 +28,7 @@ class Repo:
     self.root =  Path( Path(location)/ name )
     self.src =  Path( self.root, "src", name )
     self.git = GitCommander(self)
-    self.version = "flute"
+    self.version = "harp"
 
   def pip_version(self):
       with open(self.root/"pyproject.toml", "rb") as f:

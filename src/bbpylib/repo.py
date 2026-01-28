@@ -28,7 +28,7 @@ class Repo:
     self.root =  Path( Path(location)/ name )
     self.src =  Path( self.root, "src", name )
     self.git = GitCommander(self)
-    self.version = "orange"
+    self.version = "octopus"
 
   def pip_version(self):
       with open(self.root/"pyproject.toml", "rb") as f:
@@ -49,7 +49,7 @@ class Repo:
       v = self.pip_version()
       nv = bump_version(v, part=part)
       print("Incrementing pip version:", v, "->", nv)
-      self.set_version(nv, self)
+      self.set_version(nv)
 
   def show_config(self):
       with open(self.root/"pyproject.toml", "r") as f:
@@ -81,10 +81,6 @@ class Repo:
       self.build_pip()
       self.upoad_pip()
 
-
-
-
-
 # This is just a str->str function so not in the class
 def bump_version(v, part="patch"):
     major, minor, patch = map(int, v.split("."))
@@ -95,9 +91,6 @@ def bump_version(v, part="patch"):
     if part == "patch":
         return f"{major}.{minor}.{patch + 1}"
     raise ValueError("part must be 'major', 'minor', or 'patch'")
-
-
-
 
 
 class GitCommander:

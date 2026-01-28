@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bbpylib"
-version = "0.1.4"
+version = "0.1.7"
 description = "A personal Python utility library."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -13,5 +13,9 @@ authors = [
   { name = "Brandon Bennett" }
 ]
 
+[tool.hatch.build]
+dev-mode-dirs = ["src"]
+
 [tool.hatch.build.targets.wheel]
-packages = ["src/bbpylib"]
+sources = ["src"]
+packages = ["bbpylib"]

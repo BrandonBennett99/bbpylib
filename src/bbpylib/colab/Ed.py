@@ -1,9 +1,9 @@
 from pathlib import Path
 import ipywidgets as w
-from IPython.display import display
+from IPython.display import display, Javascript
 
 class Ed:
-    def __init__(self, path_str, height="200px", path_chars=80):
+    def __init__(self, path_str, height="200px", path_chars=80, visible=True):
         self.path = Path(path_str)
 
         self.editor = w.Textarea(layout=w.Layout(width="100%", height=height))
@@ -37,6 +37,16 @@ class Ed:
         self.editor.observe(self._on_edit, names="value")
 
         self._reload()
+
+        # ---- NEW: disable spellcheck for this editor only ----
+        display(Javascript("""
+        document.querySelectorAll('.ed-editor textarea').forEach(t => {
+            t.setAttribute('spellcheck', 'false');
+        });
+        """))
+
+        if visible:
+             self.display()
 
     def _set_dirty(self, dirty: bool):
         self._dirty = dirty

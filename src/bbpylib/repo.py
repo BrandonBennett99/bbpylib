@@ -1,17 +1,144 @@
+## Written from repo.ipynb
+
 import tomllib
 from pathlib import Path
+import re
+import subprocess
+
+from .process import run_command
+
+try:
+  from google.colab import userdata
+  GITHUB_TOKEN = userdata.get("GITHUB_TOKEN")
+  PIP_API_TOKEN = userdata.get("PIP_API_TOKEN")
+except:
+  print("Could not get tokens via google.colab.userdata")
+  GITHUB_TOKEN = None
+  PIP_API_TOKEN = None
+
 
 class Repo:
-  def __init__(self, name, location):
+  def __init__(self, name, location, user,
+               git_token=GITHUB_TOKEN, pip_token = PIP_API_TOKEN):
+    self.name = name
+    self.location = location
+    self.user = user
+    self.git_token = git_token
+    self.pip_token = pip_token
     self.root =  Path( Path(location)/ name )
-    self.src =  Path( self.root, "src", name ) 
+    self.src =  Path( self.root, "src", name )
+    self.git = GitCommander(self)
+    self.version = "flute"
 
-  
   def pip_version(self):
       with open(self.root/"pyproject.toml", "rb") as f:
           data = tomllib.load(f)
       return data["project"]["version"]
 
+  def increment_pip_version(self, part="patch"):
+      v = self.pip_version()
+      nv = bump_version(v, part=part)
+      set_version(nv, self)
+
   def show_config(self):
-         with open(self.root/"pyproject.toml", "r") as f:
+      with open(self.root/"pyproject.toml", "r") as f:
           print( f.read() )
+
+def bump_version(v, part="patch"):
+    major, minor, patch = map(int, v.split("."))
+    if part == "major":
+        return f"{major + 1}.0.0"
+    if part == "minor":
+        return f"{major}.{minor + 1}.0"
+    if part == "patch":
+        return f"{major}.{minor}.{patch + 1}"
+    raise ValueError("part must be 'major', 'minor', or 'patch'")
+
+def set_version(new_version, repo):
+    path = Path(repo.root/"pyproject.toml")
+    text = path.read_text()
+    text, n = re.subn( r'(version\s*=\s*")[^"]+(")',
+                       rf'\1{new_version}\2',
+                       text, count=1)
+    if n != 1:
+        raise RuntimeError("Could not uniquely locate version field")
+    path.write_text(text)
+
+def check_repo_files( r ):
+  root = r.root
+  print("pyproject:", (root/"pyproject.toml").exists())
+  print("src dir:", (root/"src").is_dir())
+  print("pkg dir:", (root/"src"/r.name).is_dir())
+  print("__init__.py:", (root/"src"/r.name/"__init__.py").exists())
+
+
+
+class GitCommander:
+    def __init__(self, repo):
+        self.repo = repo
+        self.name = repo.name
+        self.user = repo.user
+        self.token = repo.git_token
+
+    def git_command(self, *cmd, check=True):
+        return run_command(["git", *cmd], cwd=self.repo.root, check=check)
+
+    def status(self):        return self.git_command("status")
+    def status_short(self):  return self.git_command("status", "-sb")
+
+    def add(self, *files):
+        if files: 
+           return self.git_command("add", files ) 
+        return self.git_command("add", "-A")
+
+    def commit(self, message="Committing minor updates."):
+        if self.git_command( "diff", "--cached", "--quiet", check=False ).returncode == 0:
+            print("No changes to commit.")
+            return
+        return self.git_command("commit", "-m", message)
+
+    def push(self):
+        url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
+        self.git_command( "push", url )
+
+    def update(self, message="Committing minor updates."):
+        self.add()
+        self.commit(message=message)
+        self.push()
+
+    def fetch(self):
+        url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
+        self.git_command( "fetch", url )
+
+    def merge(self):
+        self.git_command( "merge", "FETCH_HEAD" )
+
+    def pull(self):
+        self.fetch()
+        self.merge()
+
+    def up_to_date(self):
+        return git_is_up_to_date(self.repo)
+
+    # Don't really need to do this as can pass the token directly
+    def set_token_remote(self, remote="origin"):
+        url = f"https://{self.user}:{self.token}@github.com/{user}/{self.name}.git"
+        return self._git("remote", "set-url", remote, url)
+
+# def git_update(repo_name, message="Minor change"):
+#   git_add_and_commit(repo_name, message=message )
+#   git_push(repo_name)
+
+def git_is_up_to_date(repo):
+    path = repo.root
+    subprocess.run(["git", "fetch"], cwd=path, check=True)
+
+    r = subprocess.run(
+        ["git", "rev-list", "--left-right", "--count", "HEAD...@{u}"],
+        cwd=path,
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    ahead, behind = map(int, r.stdout.split())
+    return ahead == 0 and behind == 0

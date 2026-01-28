@@ -65,6 +65,7 @@ class Repo:
 
   def build_pip(self):
       print(f"Building pip package: {self.name}-{self.pip_version()}")
+      run_command( ["rm", "-rf", "dist", "build", "*.egg-info"], cwd=self.root, check=True )
       run_command( ["pip", "-q", "install", "build"], check=True)
       run_command( ["python", "-m", "build"], cwd=self.root, check=True)
       run_command( ["ls", "dist"], cwd=self.root, check=True)

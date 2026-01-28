@@ -28,7 +28,7 @@ class Repo:
     self.root =  Path( Path(location)/ name )
     self.src =  Path( self.root, "src", name )
     self.git = GitCommander(self)
-    self.version = "harp"
+    self.version = "banjo"
 
   def pip_version(self):
       with open(self.root/"pyproject.toml", "rb") as f:
@@ -99,7 +99,6 @@ class GitCommander:
         return self.git_command("commit", "-m", message)
 
     def push(self):
-        #url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
         self.git_command( "push", self.url )
 
     def update(self, message="Committing minor updates."):
@@ -108,7 +107,6 @@ class GitCommander:
         self.push()
 
     def fetch(self):
-        #url = f"https://{self.user}:{self.token}@github.com/{self.user}/{self.name}.git"
         self.git_command( "fetch", self.url )
 
     def merge(self):

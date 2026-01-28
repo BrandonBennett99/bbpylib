@@ -79,7 +79,7 @@ class Repo:
   def update_pip(self):
       self.increment_pip_version()
       self.build_pip()
-      self.upoad_pip()
+      self.upload_pip()
 
 # This is just a str->str function so not in the class
 def bump_version(v, part="patch"):

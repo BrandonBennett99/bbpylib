@@ -35,11 +35,6 @@ class Repo:
           data = tomllib.load(f)
       return data["project"]["version"]
 
-  def increment_pip_version(self, part="patch"):
-      v = self.pip_version()
-      nv = bump_version(v, part=part)
-      self.set_version(nv, self)
-
   def set_version(self, new_version):
       path = Path(self.root/"pyproject.toml")
       text = path.read_text()
@@ -50,6 +45,11 @@ class Repo:
           raise RuntimeError("Could not uniquely locate version field")
       path.write_text(text)
 
+  def increment_pip_version(self, part="patch"):
+      v = self.pip_version()
+      nv = bump_version(v, part=part)
+      print("Incrementing pip version:", v, "->", nv)
+      self.set_version(nv, self)
 
   def show_config(self):
       with open(self.root/"pyproject.toml", "r") as f:
@@ -61,6 +61,29 @@ class Repo:
       print("src dir:", (root/"src").is_dir())
       print("pkg dir:", (root/"src"/self.name).is_dir())
       print("__init__.py:", (root/"src"/self.name/"__init__.py").exists())
+
+  def build_pip(self):
+      print(f"Building pip package: {self.name}-{self.version()}")
+      run_command( "pip", "-q", "install", "build", check=True)
+      run_command( "python", "-m", "build", cwd=self.root, check=True)
+      run_command( "ls", "dist", cwd=self.root, check=True)
+  
+  def upload_pip(self):
+      print(f"Uploading {self.name}-{self.version()} to PyPi ..." )
+      env = os.environ.copy()
+      env["TWINE_USERNAME"] = "__token__"
+      env["TWINE_PASSWORD"] = self.pip_token
+      run_command( "pip", "-q", "install", "twine", check=True)
+      run_command( "twine", "upload", "dist/*", cwd=self.root, env=env, check=True)
+
+  def update_pip(self):
+      self.increment_pip_version()
+      self.build_pip()
+      self.upoad_pip()
+
+
+
+
 
 # This is just a str->str function so not in the class
 def bump_version(v, part="patch"):

@@ -64,17 +64,17 @@ class Repo:
 
   def build_pip(self):
       print(f"Building pip package: {self.name}-{self.pip_version()}")
-      run_command( "pip", "-q", "install", "build", check=True)
-      run_command( "python", "-m", "build", cwd=self.root, check=True)
-      run_command( "ls", "dist", cwd=self.root, check=True)
+      run_command( ["pip", "-q", "install", "build"], check=True)
+      run_command( ["python", "-m", "build"], cwd=self.root, check=True)
+      run_command( ["ls", "dist"], cwd=self.root, check=True)
   
   def upload_pip(self):
       print(f"Uploading {self.name}-{self.pip_version()} to PyPi ..." )
       env = os.environ.copy()
       env["TWINE_USERNAME"] = "__token__"
       env["TWINE_PASSWORD"] = self.pip_token
-      run_command( "pip", "-q", "install", "twine", check=True)
-      run_command( "twine", "upload", "dist/*", cwd=self.root, env=env, check=True)
+      run_command( ["pip", "-q", "install", "twine"], check=True)
+      run_command( ["twine", "upload", "dist/*"], cwd=self.root, env=env, check=True)
 
   def update_pip(self):
       self.increment_pip_version()

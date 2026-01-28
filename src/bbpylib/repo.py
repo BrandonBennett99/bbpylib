@@ -39,7 +39,7 @@ class Repo:
       path = Path(self.root/"pyproject.toml")
       text = path.read_text()
       text, n = re.subn( r'(version\s*=\s*")[^"]+(")',
-                        rf'\1{new_version}\2',
+                        rf'\g<1>{new_version}\g<2>',
                         text, count=1)
       if n != 1:
           raise RuntimeError("Could not uniquely locate version field")

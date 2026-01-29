@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bbpylib"
-version = "0.1.15"
+version = "0.1.16"
 description = "A personal Python utility library."
 readme = "README.md"
 requires-python = ">=3.9"

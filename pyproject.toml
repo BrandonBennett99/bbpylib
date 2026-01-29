@@ -1,10 +1,11 @@
+
 [build-system]
 requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
 name = "bbpylib"
-version = "0.1.14"
+version = "0.1.15"
 description = "A personal Python utility library."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -17,5 +18,5 @@ authors = [
 dev-mode-dirs = ["src"]
 
 [tool.hatch.build.targets.wheel]
-sources = ["src"]
-packages = ["bbpylib"]
+#sources = ["src"]
+packages = ["src/bbpylib"]

@@ -29,7 +29,7 @@ class Repo:
     self.root =  Path( Path(location)/ name )
     self.src =  Path( self.root, "src", name )
     self.git = GitCommander(self)
-    self.version = "octopus"
+    self.version = "spanner"
 
   def pip_version(self):
       with open(self.root/"pyproject.toml", "rb") as f:
@@ -69,7 +69,7 @@ class Repo:
       run_command( ["pip", "-q", "install", "build"], check=True)
       run_command( ["python", "-m", "build"], cwd=self.root, check=True)
       run_command( ["ls", "dist"], cwd=self.root, check=True)
-  
+
   def upload_pip(self):
       print(f"Uploading {self.name}-{self.pip_version()} to PyPi ..." )
       env = os.environ.copy()
@@ -110,8 +110,8 @@ class GitCommander:
     def status_short(self):  return self.git_command("status", "-sb")
 
     def add(self, *files):
-        if files: 
-           return self.git_command("add", files ) 
+        if files:
+           return self.git_command("add", files )
         return self.git_command("add", "-A")
 
     def commit(self, message="Committing minor updates."):
